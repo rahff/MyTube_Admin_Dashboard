@@ -5,53 +5,28 @@ import { VideoManager } from "../use-cases/VideoManager";
 import { UnknowException } from "src/shared/Exception";
 
 
-export const dataSourceWillReturnListAfter1Second = (videoDataSource: jasmine.SpyObj<VideoDataSource>) => {
-    videoDataSource.getVideoList.and.returnValue(new Promise((complete) => { 
+export const dataSourceWillReturnAfter1Second = (videoDataSource: any, methodName: string, value: any) => {
+    videoDataSource[methodName].and.returnValue(new Promise((complete) => { 
         setTimeout(() => {
-            complete(fakeVideoMetaDataList);
+            complete(value);
         }, 1000);
     }));
 }
 
-export const dataSourceWillReturnNewVideoAfter1Second = (videoDataSource: jasmine.SpyObj<VideoDataSource>) => {
-    videoDataSource.addVideo.and
-    .returnValue(new Promise((complete) => {
-        setTimeout(() => {
-            complete(newVideoMetaData);
-        }, 1000);
-    }));
-}
 
-export const dataSourceWillReturnRemovedVideoIdAfter1Second = (videoDataSource: jasmine.SpyObj<VideoDataSource>) => {
-    videoDataSource.removeVideo.and
-    .returnValue(new Promise((complete) => {
-        setTimeout(() => {
-            complete("2345673");
-        }, 1000);
-    }));
-}
 
-export const dataSourceWillFailRemovingVideoAfter1Second = (videoDataSource: jasmine.SpyObj<VideoDataSource>) => {
-    videoDataSource.removeVideo.and
+export const dataSourceWillFailAfter1Second = (videoDataSource: any, methodName: string, error: any) => {
+    videoDataSource[methodName].and
     .returnValue(new Promise((_, reject) => {
         setTimeout(() => {
-            reject(new UnknowException("internal server error"));
+            reject(error);
         }, 1000);
     }));
 }
 
-export const dataSourceWillRejectAddingVideoAfter1Second = (videoDataSource: jasmine.SpyObj<VideoDataSource>) => {
-    videoDataSource.addVideo.and
-    .returnValue(new Promise((_, reject) => {
-        setTimeout(() => {
-            reject(new UnknowException("internal server error"));
-        }, 1000);
-    }));
-}
-
-export const verifyIsLoadindWhileprocessing = (isLoading: boolean, videoManager: VideoManager): boolean => {
+export const verifyIsLoadindWhileprocessing = (isLoading: boolean, asyncTaskProcessor: any): boolean => {
     tick(100);
-    videoManager.isLoading().subscribe((loading: boolean) => {
+    asyncTaskProcessor.isLoading().subscribe((loading: boolean) => {
         isLoading = loading;
     })
     return isLoading;

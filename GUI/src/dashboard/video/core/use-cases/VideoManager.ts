@@ -1,30 +1,21 @@
-import { BehaviorSubject, Observable, of } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { VideoMetaData } from "../ports/dtos/VideoMetaData";
 import { VideoDataSource } from "../ports/driven/VideoDataSource";
 import { AddVideoRequest } from "../ports/dtos/AddVideoRequest";
-import { Exception } from "src/shared/Exception";
+import { AsyncTaskProcessor } from "./AsyncTaskProcessor";
 
 
-export class VideoManager {
+
+export class VideoManager extends AsyncTaskProcessor {
 
     private videoMetaDataList$ = new BehaviorSubject<VideoMetaData[]>([]);
-    private isLoading$ = new BehaviorSubject<boolean>(false);
-    private error$ = new BehaviorSubject<Exception | null>(null);
 
-    public constructor(private videoDataSource: VideoDataSource){}
+    public constructor(private videoDataSource: VideoDataSource){super()}
 
     public getVideoList(): Observable<VideoMetaData[]> {
         return this.videoMetaDataList$.asObservable();
     }
     
-    public isLoading(): Observable<boolean> {
-        return this.isLoading$.asObservable();
-    }
-
-    public getError(): Observable<Exception | null> {
-        return this.error$.asObservable();
-    }
-
     public async queryVideoList(): Promise<void> {
         await this.makeAsyncTask(this.videoDataSource.getVideoList(), this.setVideoList.bind(this));
     }
@@ -49,16 +40,5 @@ export class VideoManager {
         const newVideoList = this.videoMetaDataList$
         .value.filter((video) => video.videoId != videoId);
         this.videoMetaDataList$.next(newVideoList);
-    }
-    
-    private async makeAsyncTask<T>(task: Promise<T>, update: Function): Promise<void> {
-        try {
-            this.isLoading$.next(true);
-            const result = await task;
-            update(result);
-        } catch (error: any) {
-            this.error$.next(error);
-        }
-        this.isLoading$.next(false);
     }
 }

@@ -1,0 +1,6 @@
+
+<ul *ngIf="getVideoList() | async let videoList">
+    <li *ngFor="let video of videoList">
+        <app-video-card [video]="video"></app-video-card>
+    </li>
+</ul>

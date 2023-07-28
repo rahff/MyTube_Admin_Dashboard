@@ -1,0 +1,2 @@
+<p *ngIf="isLoading() | async">Loading...</p>
+<p *ngIf="getStats() | async let stats"> {{stats | json}} </p>

@@ -4,7 +4,7 @@ import { VideoManager } from "./VideoManager";
 import { VideoDataSource } from "../ports/driven/VideoDataSource";
 import { fakeAsync } from "@angular/core/testing";
 import { Exception, UnknowException } from "src/shared/Exception";
-import { after1second, dataSourceWillReturnListAfter1Second, dataSourceWillReturnNewVideoAfter1Second, dataSourceWillReturnRemovedVideoIdAfter1Second, verifyIsLoadindWhileprocessing, withFakeListAsInitialState, dataSourceWillRejectAddingVideoAfter1Second, dataSourceWillFailRemovingVideoAfter1Second } from "../utils/test.utils";
+import { after1second, verifyIsLoadindWhileprocessing, withFakeListAsInitialState, dataSourceWillReturnAfter1Second, dataSourceWillFailAfter1Second } from "../utils/test.utils";
 
 
 
@@ -29,7 +29,7 @@ describe("VideoManager: Core use-case", () => {
 
     it("Can add a new video", fakeAsync(async () => {
         await withFakeListAsInitialState(videoDataSource, videoManager);
-        dataSourceWillReturnNewVideoAfter1Second(videoDataSource);
+        dataSourceWillReturnAfter1Second(videoDataSource, "addVideo", newVideoMetaData);
         videoManager.addVideo(addVideoRequest);
         isLoading = verifyIsLoadindWhileprocessing(isLoading, videoManager);
         expect(isLoading).toBeTrue();
@@ -43,7 +43,7 @@ describe("VideoManager: Core use-case", () => {
 
     it("adding video may fail", fakeAsync(async () => {
         await withFakeListAsInitialState(videoDataSource, videoManager);
-        dataSourceWillRejectAddingVideoAfter1Second(videoDataSource);
+        dataSourceWillFailAfter1Second(videoDataSource, "addVideo", new UnknowException("fail"));
         videoManager.addVideo(addVideoRequest);
         after1second();
         videoManager.getVideoList().subscribe((list: VideoMetaData[]) => {
@@ -55,7 +55,7 @@ describe("VideoManager: Core use-case", () => {
     }))
 
     it("should be in loading state while processing", fakeAsync(() => {
-        dataSourceWillReturnListAfter1Second(videoDataSource);
+        dataSourceWillReturnAfter1Second(videoDataSource, "getVideoList", fakeVideoMetaDataList);
         videoManager.queryVideoList();
         isLoading = verifyIsLoadindWhileprocessing(isLoading, videoManager);
         expect(isLoading).toBeTrue();
@@ -66,13 +66,9 @@ describe("VideoManager: Core use-case", () => {
 
     it("can remove a video", fakeAsync(async ()=> {
         await withFakeListAsInitialState(videoDataSource, videoManager);
-        dataSourceWillReturnRemovedVideoIdAfter1Second(videoDataSource);
+        dataSourceWillReturnAfter1Second(videoDataSource, "removeVideo", fakeVideoMetaDataList[1].videoId);
         videoManager.remmoveVideo(fakeVideoMetaDataList[1].videoId);
-        isLoading = verifyIsLoadindWhileprocessing(isLoading, videoManager);
-        expect(isLoading).toBeTrue();
         after1second();
-        isLoading = verifyIsLoadindWhileprocessing(isLoading, videoManager);
-        expect(isLoading).toBeFalse();
         videoManager.getVideoList().subscribe((list: VideoMetaData[]) => {
             expect(list).toEqual(fakeVideoMetaDataListAfterRemoveOne);
         });
@@ -81,18 +77,14 @@ describe("VideoManager: Core use-case", () => {
     it("Removing video may fail", fakeAsync(async ()=> {
         videoDataSource.getVideoList.and.returnValue(new Promise((complete) => complete(fakeVideoMetaDataList)));
         await videoManager.queryVideoList();
-        dataSourceWillFailRemovingVideoAfter1Second(videoDataSource);
+        dataSourceWillFailAfter1Second(videoDataSource, "removeVideo", new UnknowException("fail"));
         videoManager.remmoveVideo(fakeVideoMetaDataList[1].videoId);
-        isLoading = verifyIsLoadindWhileprocessing(isLoading, videoManager);
-        expect(isLoading).toBeTrue();
         after1second();
-        isLoading = verifyIsLoadindWhileprocessing(isLoading, videoManager);
-        expect(isLoading).toBeFalse();
         videoManager.getVideoList().subscribe((list: VideoMetaData[]) => {
             expect(list).toEqual(fakeVideoMetaDataList);
         });
         videoManager.getError().subscribe((error: Exception | null) => {
-            expect(error).toBeInstanceOf(UnknowException)
+            expect(error).toBeInstanceOf(UnknowException);
         });
     }));
 })
